@@ -312,7 +312,6 @@ function MatchScreenOriginal({ profile, onReset }) {
 /* ─── MATCH SCREEN (kiss mode) ───────────────────────────────── */
 function MatchScreenKiss({ profile, onReset }) {
   const { videoRef, permitted, start } = useCamera();
-  const [phase, setPhase] = useState("ask"); // ask | yes | no
 
   useEffect(() => {
     start();
@@ -323,8 +322,7 @@ function MatchScreenKiss({ profile, onReset }) {
       <style>{`
         @keyframes heartbeat { 0%,100%{transform:scale(1)} 14%{transform:scale(1.25)} 28%{transform:scale(1)} 42%{transform:scale(1.15)} }
         @keyframes fadeUp    { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes glow      { 0%,100%{box-shadow:0 0 30px rgba(253,38,122,.5)} 50%{box-shadow:0 0 60px rgba(253,38,122,.9)} }
-        @keyframes ripple    { 0%{transform:scale(1);opacity:.8} 100%{transform:scale(2.2);opacity:0} }
+        @keyframes pulse     { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
       `}</style>
 
       {/* Ambient bokeh */}
@@ -332,77 +330,48 @@ function MatchScreenKiss({ profile, onReset }) {
         <div key={i} style={{ position:"absolute", width:Math.random()*60+20, height:Math.random()*60+20, borderRadius:"50%", background:["rgba(253,38,122,.12)","rgba(255,96,54,.1)","rgba(255,180,200,.08)"][i%3], top:`${Math.random()*100}%`, left:`${Math.random()*100}%`, filter:"blur(8px)" }} />
       ))}
 
-      {/* ── Ask phase ── */}
-      {phase === "ask" && (
-        <div style={{ animation:"fadeUp .5s ease", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
-          {/* Ripple heart */}
-          <div style={{ position:"relative", width:130, height:130, display:"flex", alignItems:"center", justifyContent:"center", marginBottom:4 }}>
-            <div style={{ position:"absolute", width:130, height:130, borderRadius:"50%", background:"rgba(253,38,122,.2)", animation:"ripple 1.6s ease-out infinite" }} />
-            <div style={{ position:"absolute", width:130, height:130, borderRadius:"50%", background:"rgba(253,38,122,.15)", animation:"ripple 1.6s ease-out .5s infinite" }} />
-            <div style={{ width:80, height:80, borderRadius:"50%", overflow:"hidden", border:"3px solid #fd267a", animation:"glow 2s ease-in-out infinite", position:"relative", zIndex:1 }}>
-              <img src={profile.photoUrl} style={{ width:"100%", height:"100%", objectFit:"cover" }} alt="" />
-            </div>
+      <div style={{ animation:"fadeUp .5s ease", display:"flex", flexDirection:"column", alignItems:"center" }}>
+        <div style={{ animation:"heartbeat 1.2s ease infinite", marginBottom:2 }}>
+          <svg viewBox="0 0 80 80" width="52" height="52">
+            <defs><linearGradient id="kg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fd267a"/><stop offset="100%" stopColor="#ff6036"/></linearGradient></defs>
+            <path fill="url(#kg)" d="M40 68C20 52 8 40 8 28a18 18 0 0 1 32-11 18 18 0 0 1 32 11c0 12-12 24-32 40z"/>
+          </svg>
+        </div>
+
+        <div style={{ background:GRADIENT, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", fontSize:36, fontWeight:900, letterSpacing:2, marginBottom:6 }}>
+          É UM MATCH!
+        </div>
+        <div style={{ fontSize:22, color:"white", fontWeight:700, marginBottom:6 }}>
+          {profile.name} quer um beijo seu 💋
+        </div>
+        <div style={{ fontSize:15, color:"rgba(255,255,255,.65)", marginBottom:26, maxWidth:320, lineHeight:1.5 }}>
+          O que você acha?
+        </div>
+
+        {/* Overlay: profile photo + live selfie */}
+        <div style={{ position:"relative", display:"flex", alignItems:"center", justifyContent:"center", marginBottom:30, height:140 }}>
+          <div style={{ width:128, height:128, borderRadius:"50%", overflow:"hidden", border:"3px solid #fd267a", boxShadow:"0 0 24px rgba(253,38,122,.45)", background:"#222" }}>
+            <img src={profile.photoUrl} style={{ width:"100%", height:"100%", objectFit:"cover" }} alt="" />
           </div>
 
-          <div style={{ animation:"heartbeat 1.2s ease infinite", marginBottom:0, marginTop:8 }}>
-            <svg viewBox="0 0 80 80" width="52" height="52">
-              <defs><linearGradient id="kg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fd267a"/><stop offset="100%" stopColor="#ff6036"/></linearGradient></defs>
-              <path fill="url(#kg)" d="M40 68C20 52 8 40 8 28a18 18 0 0 1 32-11 18 18 0 0 1 32 11c0 12-12 24-32 40z"/>
-            </svg>
-          </div>
-
-          <div style={{ background:GRADIENT, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", fontSize:34, fontWeight:900, letterSpacing:2, marginBottom:8 }}>É UM MATCH!</div>
-
-          <div style={{ fontSize:22, color:"white", fontWeight:700, marginBottom:6 }}>
-            {profile.name} quer um beijo seu 💋
-          </div>
-          <div style={{ fontSize:16, color:"rgba(255,255,255,.65)", marginBottom:32, maxWidth:260, lineHeight:1.5 }}>
-            O que você acha? A câmera está pronta...
-          </div>
-
-          {/* Camera selfie mirror */}
-          <div style={{ width:200, height:200, borderRadius:"50%", overflow:"hidden", background:"#111", border:"3px solid #fd267a", boxShadow:"0 0 40px rgba(253,38,122,.6)", marginBottom:28, position:"relative" }}>
+          <div style={{ width:128, height:128, borderRadius:"50%", overflow:"hidden", border:"3px solid #fd267a", boxShadow:"0 0 28px rgba(253,38,122,.6)", background:"#111", marginLeft:-22, position:"relative" }}>
             {permitted === false ? (
               <div style={{ display:"flex", alignItems:"center", justifyContent:"center", height:"100%", flexDirection:"column", gap:6 }}>
-                <span style={{ fontSize:40 }}>🙈</span>
-                <span style={{ fontSize:12, color:"#888" }}>câmera bloqueada</span>
+                <span style={{ fontSize:34 }}>🙈</span>
+                <span style={{ fontSize:11, color:"#888" }}>câmera bloqueada</span>
               </div>
             ) : (
               <video ref={videoRef} autoPlay playsInline muted style={{ width:"100%", height:"100%", objectFit:"cover", transform:"scaleX(-1)" }} />
             )}
           </div>
 
-          <div style={{ display:"flex", gap:14, width:"100%", maxWidth:300 }}>
-            <button onClick={()=>setPhase("yes")} style={{ flex:1, padding:"15px", borderRadius:50, background:GRADIENT, border:"none", color:"white", fontSize:20, cursor:"pointer", boxShadow:"0 4px 20px rgba(253,38,122,.5)", fontWeight:700 }}>
-              😘 Sim!
-            </button>
-            <button onClick={()=>setPhase("no")} style={{ flex:1, padding:"15px", borderRadius:50, background:"rgba(255,255,255,.08)", border:"2px solid rgba(255,255,255,.2)", color:"rgba(255,255,255,.7)", fontSize:18, cursor:"pointer", fontWeight:600 }}>
-              😅 Não...
-            </button>
-          </div>
+          
         </div>
-      )}
 
-      {/* ── Yes phase ── */}
-      {phase === "yes" && (
-        <div style={{ animation:"fadeUp .5s ease", display:"flex", flexDirection:"column", alignItems:"center" }}>
-          <div style={{ fontSize:80, marginBottom:16, animation:"heartbeat .8s ease infinite" }}>💋</div>
-          <div style={{ background:GRADIENT, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", fontSize:38, fontWeight:900, marginBottom:10 }}>VAMOS!</div>
-          <p style={{ color:"rgba(255,255,255,.8)", fontSize:18, marginBottom:32 }}>Chegou a hora! 🥰</p>
-          <button onClick={onReset} style={{ ...S.btnPrimary, maxWidth:260, marginBottom:12 }}>🔄 Jogar de novo</button>
-          <button onClick={onReset} style={S.btnOutline}>Ir para início</button>
-        </div>
-      )}
-
-      {/* ── No phase ── */}
-      {phase === "no" && (
-        <div style={{ animation:"fadeUp .5s ease", display:"flex", flexDirection:"column", alignItems:"center" }}>
-          <div style={{ fontSize:80, marginBottom:16 }}>😭</div>
-          <div style={{ color:"white", fontSize:30, fontWeight:700, marginBottom:10 }}>Ficou pra próxima...</div>
-          <p style={{ color:"rgba(255,255,255,.6)", fontSize:16, marginBottom:32 }}>Mas {profile.name} ainda está por aqui 👀</p>
-          <button onClick={onReset} style={{ ...S.btnPrimary, maxWidth:260 }}>🔄 Tentar de novo</button>
-        </div>
-      )}
+        <button onClick={onReset} style={S.btnOutline}>
+          Voltar
+        </button>
+      </div>
     </div>
   );
 }
