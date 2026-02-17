@@ -3,6 +3,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 const GRADIENT = "linear-gradient(135deg, #fd267a 0%, #ff6036 100%)";
 const GRADIENT_REV = "linear-gradient(135deg, #ff6036 0%, #fd267a 100%)";
 
+const PROFILE_STORAGE_KEY = "tinder.profile.v1";
+
 /* ─── Default profile ─────────────────────────────────────────── */
 const defaultProfile = {
   name: "André",
@@ -14,6 +16,18 @@ const defaultProfile = {
   photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80",
   mode: "kiss", // "original" | "kiss"
 };
+
+function loadPersistedProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (!raw) return defaultProfile;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return defaultProfile;
+    return { ...defaultProfile, ...parsed };
+  } catch {
+    return defaultProfile;
+  }
+}
 
 /* ─── Tiny icons ─────────────────────────────────────────────── */
 const TinderLogo = () => (
@@ -415,7 +429,15 @@ function BottomNav() {
 /* ─── ROOT APP ───────────────────────────────────────────────── */
 export default function App() {
   const [screen, setScreen]   = useState("config");
-  const [profile, setProfile] = useState(defaultProfile);
+  const [profile, setProfile] = useState(() => loadPersistedProfile());
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+    } catch {
+      // ignore (e.g. storage full / blocked)
+    }
+  }, [profile]);
 
   const reset = () => setScreen("cards");
 
