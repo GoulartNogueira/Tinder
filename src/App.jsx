@@ -3,10 +3,10 @@ import { useState, useRef, useEffect, useCallback } from "react";
 const GRADIENT = "linear-gradient(135deg, #fd267a 0%, #ff6036 100%)";
 const GRADIENT_REV = "linear-gradient(135deg, #ff6036 0%, #fd267a 100%)";
 
-const PROFILE_STORAGE_KEY = "tinder.profile.v1";
+const PROFILES_STORAGE_KEY = "tinder.profiles.v1";
 
-/* ─── Default profile ─────────────────────────────────────────── */
-const defaultProfile = {
+/* ─── Default profiles ────────────────────────────────────────── */
+const defaultProfiles = [{
   name: "André",
   age: 34,
   bio: "Apaixonado por tecnologia, teatro e boas conversas. Prefiro nos encontrar pessoalmente 😏",
@@ -15,17 +15,17 @@ const defaultProfile = {
   school: "UFSCar",
   photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80",
   mode: "kiss", // "original" | "kiss"
-};
+}];
 
-function loadPersistedProfile() {
+function loadPersistedProfiles() {
   try {
-    const raw = localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) return defaultProfile;
+    const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
+    if (!raw) return defaultProfiles;
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object") return defaultProfile;
-    return { ...defaultProfile, ...parsed };
+    if (!parsed || !Array.isArray(parsed) || parsed.length === 0) return defaultProfiles;
+    return parsed;
   } catch {
-    return defaultProfile;
+    return defaultProfiles;
   }
 }
 
@@ -78,11 +78,17 @@ function useCamera() {
 }
 
 /* ─── CONFIG SCREEN ──────────────────────────────────────────── */
-function ConfigScreen({ profile, setProfile, onDone }) {
-  const [form, setForm] = useState({ ...profile });
+function ConfigScreen({ profiles, setProfiles, onDone }) {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [form, setForm] = useState({ ...profiles[selectedIndex] });
   const fileRef = useRef();
   const { videoRef, permitted, start, stop } = useCamera();
   const [showCamPreview, setShowCamPreview] = useState(false);
+
+  // Update form when selectedIndex changes
+  useEffect(() => {
+    setForm({ ...profiles[selectedIndex] });
+  }, [selectedIndex, profiles]);
 
   const handleFile = e => {
     const file = e.target.files[0];
@@ -99,8 +105,26 @@ function ConfigScreen({ profile, setProfile, onDone }) {
 
   const handleDone = () => {
     stop();
-    setProfile(form);
+    const updatedProfiles = [...profiles];
+    updatedProfiles[selectedIndex] = form;
+    setProfiles(updatedProfiles);
     onDone();
+  };
+
+  const handleAddProfile = () => {
+    const newProfile = {
+      name: "Novo Perfil",
+      age: 25,
+      bio: "Adicione uma bio aqui...",
+      distance: "2 km de distância",
+      job: "Sua profissão",
+      school: "Sua escola",
+      photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80",
+      mode: "original",
+    };
+    const updatedProfiles = [...profiles, newProfile];
+    setProfiles(updatedProfiles);
+    setSelectedIndex(updatedProfiles.length - 1);
   };
 
   return (
@@ -114,6 +138,42 @@ function ConfigScreen({ profile, setProfile, onDone }) {
       <div style={{ width:"100%", maxWidth:420, padding:"28px 20px 0" }}>
         <h2 style={{ color:"#333", marginBottom:6, fontSize:22, fontWeight:700 }}>⚙️ Configurar Perfil</h2>
         <p style={{ color:"#888", fontSize:14, marginBottom:24 }}>Personalize como sua brincadeira vai aparecer.</p>
+
+        {/* ── Profile selector ── */}
+        <div style={{ marginBottom:24, background:"white", borderRadius:14, padding:"16px 18px", boxShadow:"0 2px 8px rgba(0,0,0,.06)" }}>
+          <label style={S.label}>Perfis</label>
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap", marginBottom:12 }}>
+            {profiles.map((p, idx) => (
+              <div
+                key={idx}
+                onClick={() => setSelectedIndex(idx)}
+                style={{
+                  cursor:"pointer",
+                  display:"flex",
+                  flexDirection:"column",
+                  alignItems:"center",
+                  gap:6,
+                  padding:8,
+                  borderRadius:10,
+                  border:`2px solid ${idx === selectedIndex ? "#fd267a" : "#e0e0e0"}`,
+                  background: idx === selectedIndex ? "#fff0f5" : "white",
+                  transition:"all .2s",
+                  flex:"0 0 auto"
+                }}
+              >
+                <div style={{ width:48, height:48, borderRadius:"50%", overflow:"hidden", border:"2px solid #fd267a" }}>
+                  <img src={p.photoUrl} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                </div>
+                <span style={{ fontSize:11, fontWeight:600, color: idx === selectedIndex ? "#fd267a" : "#888" }}>
+                  {p.name}
+                </span>
+              </div>
+            ))}
+          </div>
+          <button onClick={handleAddProfile} style={{ width:"100%", padding:"10px", borderRadius:10, border:"2px dashed #fd267a", background:"white", color:"#fd267a", fontWeight:600, fontSize:14, cursor:"pointer", transition:"all .2s" }}>
+            ➕ Adicionar Perfil
+          </button>
+        </div>
 
         {/* ── Mode selector ── */}
         <div style={{ marginBottom:24, background:"white", borderRadius:14, padding:"16px 18px", boxShadow:"0 2px 8px rgba(0,0,0,.06)" }}>
@@ -429,24 +489,31 @@ function BottomNav() {
 /* ─── ROOT APP ───────────────────────────────────────────────── */
 export default function App() {
   const [screen, setScreen]   = useState("config");
-  const [profile, setProfile] = useState(() => loadPersistedProfile());
+  const [profiles, setProfiles] = useState(() => loadPersistedProfiles());
+  const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
+
+  const currentProfile = profiles[currentProfileIndex];
 
   useEffect(() => {
     try {
-      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+      localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
     } catch {
       // ignore (e.g. storage full / blocked)
     }
-  }, [profile]);
+  }, [profiles]);
 
   const reset = () => setScreen("cards");
 
-  if (screen === "config")    return <ConfigScreen profile={profile} setProfile={setProfile} onDone={()=>setScreen("cards")} />;
-  if (screen === "tryagain")  return <TryAgainScreen profile={profile} onReset={reset} />;
+  const handleSwipeLeft = () => {
+    setCurrentProfileIndex(prev => (prev + 1) % profiles.length);
+  };
+
+  if (screen === "config")    return <ConfigScreen profiles={profiles} setProfiles={setProfiles} onDone={()=>setScreen("cards")} />;
+  if (screen === "tryagain")  return <TryAgainScreen profile={currentProfile} onReset={reset} />;
   if (screen === "match") {
-    return profile.mode === "kiss"
-      ? <MatchScreenKiss    profile={profile} onReset={reset} />
-      : <MatchScreenOriginal profile={profile} onReset={reset} />;
+    return currentProfile.mode === "kiss"
+      ? <MatchScreenKiss    profile={currentProfile} onReset={reset} />
+      : <MatchScreenOriginal profile={currentProfile} onReset={reset} />;
   }
 
   /* ── Cards screen ── */
@@ -466,13 +533,13 @@ export default function App() {
           <div style={{ position:"absolute", top:8, left:8, right:8, height:520, background:"#e8e8e8", borderRadius:16 }} />
           <div style={{ position:"absolute", top:4, left:4, right:4, height:520, background:"#f0f0f0", borderRadius:16 }} />
           <div style={{ position:"relative" }}>
-            <SwipeCard profile={profile} onLeft={()=>setScreen("tryagain")} onRight={()=>setScreen("match")} />
+            <SwipeCard profile={currentProfile} onLeft={handleSwipeLeft} onRight={()=>setScreen("match")} />
           </div>
         </div>
 
         {/* Action buttons */}
         <div style={{ display:"flex", justifyContent:"center", alignItems:"center", gap:18, marginTop:16, paddingBottom:20 }}>
-          <button onClick={()=>setScreen("tryagain")} style={{ width:58, height:58, borderRadius:"50%", background:"white", border:"none", boxShadow:"0 2px 16px rgba(0,0,0,.15)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><IconX /></button>
+          <button onClick={handleSwipeLeft} style={{ width:58, height:58, borderRadius:"50%", background:"white", border:"none", boxShadow:"0 2px 16px rgba(0,0,0,.15)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><IconX /></button>
           <button onClick={()=>setScreen("match")}    style={{ width:50, height:50, borderRadius:"50%", background:"white", border:"none", boxShadow:"0 2px 16px rgba(0,0,0,.12)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><IconStar size={20} /></button>
           <button onClick={()=>setScreen("match")}    style={{ width:68, height:68, borderRadius:"50%", background:GRADIENT, border:"none", boxShadow:"0 4px 20px rgba(253,38,122,.4)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><IconHeart size={30} color="white" /></button>
           <button style={{ width:50, height:50, borderRadius:"50%", background:"white", border:"none", boxShadow:"0 2px 16px rgba(0,0,0,.12)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center" }}><IconBolt size={20} /></button>
