@@ -17,6 +17,19 @@ const defaultProfiles = [{
   mode: "kiss", // "original" | "kiss"
 }];
 
+function createNewProfile() {
+  return {
+    name: "Novo Perfil",
+    age: 25,
+    bio: "Adicione uma bio aqui...",
+    distance: "2 km de distância",
+    job: "Sua profissão",
+    school: "Sua escola",
+    photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80",
+    mode: "original",
+  };
+}
+
 function loadPersistedProfiles() {
   try {
     const raw = localStorage.getItem(PROFILES_STORAGE_KEY);
@@ -80,14 +93,16 @@ function useCamera() {
 /* ─── CONFIG SCREEN ──────────────────────────────────────────── */
 function ConfigScreen({ profiles, setProfiles, onDone }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [form, setForm] = useState({ ...profiles[selectedIndex] });
+  const [form, setForm] = useState(() => profiles.length > 0 ? { ...profiles[0] } : createNewProfile());
   const fileRef = useRef();
   const { videoRef, permitted, start, stop } = useCamera();
   const [showCamPreview, setShowCamPreview] = useState(false);
 
   // Update form when selectedIndex changes
   useEffect(() => {
-    setForm({ ...profiles[selectedIndex] });
+    if (profiles.length > 0 && selectedIndex < profiles.length) {
+      setForm({ ...profiles[selectedIndex] });
+    }
   }, [selectedIndex, profiles]);
 
   const handleFile = e => {
@@ -112,17 +127,7 @@ function ConfigScreen({ profiles, setProfiles, onDone }) {
   };
 
   const handleAddProfile = () => {
-    const newProfile = {
-      name: "Novo Perfil",
-      age: 25,
-      bio: "Adicione uma bio aqui...",
-      distance: "2 km de distância",
-      job: "Sua profissão",
-      school: "Sua escola",
-      photoUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&q=80",
-      mode: "original",
-    };
-    const updatedProfiles = [...profiles, newProfile];
+    const updatedProfiles = [...profiles, createNewProfile()];
     setProfiles(updatedProfiles);
     setSelectedIndex(updatedProfiles.length - 1);
   };
