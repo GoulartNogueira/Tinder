@@ -6,13 +6,13 @@ const GRADIENT_REV = "linear-gradient(135deg, #ff6036 0%, #fd267a 100%)";
 /* ─── Default profile ─────────────────────────────────────────── */
 const defaultProfile = {
   name: "André",
-  age: 28,
+  age: 34,
   bio: "Apaixonado por tecnologia, teatro e boas conversas. Prefiro nos encontrar pessoalmente 😏",
   distance: "1 km de distância",
   job: "Engenheiro de Software",
   school: "UFSCar",
   photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80",
-  mode: "original", // "original" | "kiss"
+  mode: "kiss", // "original" | "kiss"
 };
 
 /* ─── Tiny icons ─────────────────────────────────────────────── */
