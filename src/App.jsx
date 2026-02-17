@@ -12,10 +12,6 @@ const defaultProfile = {
   job: "Engenheiro de Software",
   school: "UFSCar",
   photoUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80",
-  extraPhotos: [
-    "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=600&q=80",
-    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80",
-  ],
   mode: "original", // "original" | "kiss"
 };
 
@@ -211,7 +207,7 @@ function SwipeCard({ profile, onLeft, onRight }) {
   const [expanded, setExp]  = useState(false);
   const startRef = useRef(null);
 
-  const photos = [profile.photoUrl, ...profile.extraPhotos].filter(Boolean);
+  const photos = [profile.photoUrl].filter(Boolean);
 
   const pos = e => e.touches ? { x:e.touches[0].clientX, y:e.touches[0].clientY } : { x:e.clientX, y:e.clientY };
   const onStart = e => { startRef.current = pos(e); setDrag(d=>({...d, active:true})); };
@@ -316,19 +312,11 @@ function MatchScreenOriginal({ profile, onReset }) {
 /* ─── MATCH SCREEN (kiss mode) ───────────────────────────────── */
 function MatchScreenKiss({ profile, onReset }) {
   const { videoRef, permitted, start } = useCamera();
-  const [phase, setPhase] = useState("countdown"); // countdown | ask | waiting | yes | no
-  const [count, setCount] = useState(3);
+  const [phase, setPhase] = useState("ask"); // ask | yes | no
 
   useEffect(() => {
     start();
   }, [start]);
-
-  useEffect(() => {
-    if (phase !== "countdown") return;
-    if (count === 0) { setPhase("ask"); return; }
-    const t = setTimeout(() => setCount(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [count, phase]);
 
   return (
     <div style={{ minHeight:"100vh", background:"#0d0010", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"0 24px", textAlign:"center", position:"relative", overflow:"hidden" }}>
@@ -337,23 +325,12 @@ function MatchScreenKiss({ profile, onReset }) {
         @keyframes fadeUp    { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
         @keyframes glow      { 0%,100%{box-shadow:0 0 30px rgba(253,38,122,.5)} 50%{box-shadow:0 0 60px rgba(253,38,122,.9)} }
         @keyframes ripple    { 0%{transform:scale(1);opacity:.8} 100%{transform:scale(2.2);opacity:0} }
-        @keyframes countDown { 0%{transform:scale(1.4);opacity:0} 20%{opacity:1;transform:scale(1)} 80%{opacity:1} 100%{opacity:0;transform:scale(.8)} }
       `}</style>
 
       {/* Ambient bokeh */}
       {[...Array(14)].map((_,i) => (
         <div key={i} style={{ position:"absolute", width:Math.random()*60+20, height:Math.random()*60+20, borderRadius:"50%", background:["rgba(253,38,122,.12)","rgba(255,96,54,.1)","rgba(255,180,200,.08)"][i%3], top:`${Math.random()*100}%`, left:`${Math.random()*100}%`, filter:"blur(8px)" }} />
       ))}
-
-      {/* ── Countdown phase ── */}
-      {phase === "countdown" && (
-        <div style={{ animation:"fadeUp .4s ease" }}>
-          <div style={{ fontSize:14, color:"rgba(255,255,255,.5)", letterSpacing:4, textTransform:"uppercase", marginBottom:20 }}>preparando...</div>
-          <div style={{ fontSize:110, fontWeight:900, background:GRADIENT, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent", animation:"countDown 1s ease", lineHeight:1 }} key={count}>
-            {count === 0 ? "💋" : count}
-          </div>
-        </div>
-      )}
 
       {/* ── Ask phase ── */}
       {phase === "ask" && (
@@ -500,13 +477,6 @@ export default function App() {
           <div style={{ position:"relative" }}>
             <SwipeCard profile={profile} onLeft={()=>setScreen("tryagain")} onRight={()=>setScreen("match")} />
           </div>
-        </div>
-
-        {/* Mode badge */}
-        <div style={{ textAlign:"center", marginTop:14, marginBottom:8 }}>
-          <span style={{ fontSize:12, background: profile.mode==="kiss"?"#fff0f5":"#f0f7ff", color:profile.mode==="kiss"?"#fd267a":"#62b4f9", borderRadius:20, padding:"4px 12px", fontWeight:600 }}>
-            {profile.mode === "kiss" ? "💋 Modo Beijo ativado" : "🎉 Modo Match clássico"}
-          </span>
         </div>
 
         {/* Action buttons */}
