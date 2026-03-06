@@ -30,15 +30,18 @@ function loadPersistedProfile() {
 }
 
 /* ─── Tiny icons ─────────────────────────────────────────────── */
-const TinderLogo = () => (
+const FLAME_PATH = "M10.5 16.25c-.06 0-.1 0-.14-.04-1.36-1.8-1.7-4.9-1.78-6.08-.02-.23-.28-.35-.48-.24C3.9 12.24 0 17.82 0 23.2c0 9.27 6.43 17.04 17.5 17.04 10.37 0 17.5-8 17.5-17.03C35 11.4 26.57 3.58 19.06.04c-.2-.1-.42.07-.4.28.98 6.37-.36 13.28-8.17 15.95z";
+const TinderLogo = ({ white = false }) => (
   <svg viewBox="0 -0.06 35 40.3" width="30" height="30" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="tinderFlameGradient" cx=".5" cy="1" r="1" spreadMethod="pad">
-        <stop offset="0" stopColor="#ff7854"/>
-        <stop offset="1" stopColor="#fd267d"/>
-      </radialGradient>
-    </defs>
-    <path d="M10.5 16.25c-.06 0-.1 0-.14-.04-1.36-1.8-1.7-4.9-1.78-6.08-.02-.23-.28-.35-.48-.24C3.9 12.24 0 17.82 0 23.2c0 9.27 6.43 17.04 17.5 17.04 10.37 0 17.5-8 17.5-17.03C35 11.4 26.57 3.58 19.06.04c-.2-.1-.42.07-.4.28.98 6.37-.36 13.28-8.17 15.95z" fill="url(#tinderFlameGradient)"/>
+    {!white && (
+      <defs>
+        <radialGradient id="tinderFlameGradient" cx=".5" cy="1" r="1" spreadMethod="pad">
+          <stop offset="0" stopColor="#ff7854"/>
+          <stop offset="1" stopColor="#fd267d"/>
+        </radialGradient>
+      </defs>
+    )}
+    <path d={FLAME_PATH} fill={white ? "white" : "url(#tinderFlameGradient)"}/>
   </svg>
 );
 
@@ -113,7 +116,7 @@ function ConfigScreen({ profile, setProfile, onDone }) {
     <div style={{ minHeight:"100vh", background:"#f5f5f5", display:"flex", flexDirection:"column", alignItems:"center", paddingBottom:40 }}>
       {/* Header */}
       <div style={{ width:"100%", background:GRADIENT, padding:"18px 0 14px", display:"flex", alignItems:"center", justifyContent:"center", gap:10, boxShadow:"0 2px 12px rgba(253,38,122,.3)" }}>
-        <TinderLogo />
+        <TinderLogo white />
         <span style={{ color:"white", fontSize:22, fontWeight:700, letterSpacing:1 }}>TINDER</span>
       </div>
 
@@ -461,7 +464,7 @@ export default function App() {
       <div style={{ background:"white", borderBottom:"1px solid #f0f0f0", padding:"12px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", boxShadow:"0 1px 8px rgba(0,0,0,.05)" }}>
         <button onClick={()=>setScreen("config")} style={{ background:"none", border:"none", cursor:"pointer", fontSize:20 }}>⚙️</button>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <div style={{ background:GRADIENT, borderRadius:"50%", width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center" }}><TinderLogo /></div>
+          <div style={{ background:GRADIENT, borderRadius:"50%", width:36, height:36, display:"flex", alignItems:"center", justifyContent:"center" }}><TinderLogo white /></div>
           <span style={{ fontWeight:700, fontSize:20, background:GRADIENT, WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent" }}>tinder</span>
         </div>
         <button style={{ background:"none", border:"none", cursor:"pointer", fontSize:20 }}>🔔</button>
