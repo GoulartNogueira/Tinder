@@ -13,6 +13,7 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@vitejs/plugin-react": "^4.2.1",
     "vite": "^5.1.0",
     "vite-plugin-pwa": "^0.19.2",
