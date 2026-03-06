@@ -4,6 +4,7 @@ const GRADIENT = "linear-gradient(135deg, #fd267a 0%, #ff6036 100%)";
 const GRADIENT_REV = "linear-gradient(135deg, #ff6036 0%, #fd267a 100%)";
 
 const PROFILE_STORAGE_KEY = "tinder.profile.v1";
+const SWIPE_THRESHOLD = 150; // px required to trigger a left/right swipe action
 
 /* ─── Default profile ─────────────────────────────────────────── */
 const defaultProfile = {
@@ -237,8 +238,8 @@ function SwipeCard({ profile, onLeft, onRight }) {
   const onMove  = e => { if (!drag.active || !startRef.current) return; const p=pos(e); setDrag(d=>({...d, x:p.x-startRef.current.x, y:p.y-startRef.current.y})); };
   const onEnd   = () => {
     if (!drag.active) return;
-    if (drag.x > 90) onRight();
-    else if (drag.x < -90) onLeft();
+    if (drag.x > SWIPE_THRESHOLD) onRight();
+    else if (drag.x < -SWIPE_THRESHOLD) onLeft();
     setDrag({ x:0, y:0, active:false });
     startRef.current = null;
   };
