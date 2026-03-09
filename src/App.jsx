@@ -4,7 +4,8 @@ const GRADIENT = "linear-gradient(135deg, #fd267a 0%, #ff6036 100%)";
 const GRADIENT_REV = "linear-gradient(135deg, #ff6036 0%, #fd267a 100%)";
 
 const PROFILE_STORAGE_KEY = "tinder.profile.v1";
-const SWIPE_THRESHOLD = 150; // px required to trigger a left/right swipe action
+const SWIPE_THRESHOLD    = 150; // px required to trigger a left/right swipe action
+const VELOCITY_THRESHOLD = 0.3; // px/ms — flick speed sufficient to trigger a swipe
 
 /* ─── Default profile ─────────────────────────────────────────── */
 const defaultProfile = {
@@ -229,19 +230,51 @@ function SwipeCard({ profile, onLeft, onRight }) {
   const [drag, setDrag]     = useState({ x:0, y:0, active:false });
   const [photoIdx, setIdx]  = useState(0);
   const [expanded, setExp]  = useState(false);
-  const startRef = useRef(null);
+  const startRef   = useRef(null);   // pointer position at drag start
+  const historyRef = useRef([]);     // recent [{x, t}] samples for velocity
 
   const photos = [profile.photoUrl].filter(Boolean);
 
   const pos = e => e.touches ? { x:e.touches[0].clientX, y:e.touches[0].clientY } : { x:e.clientX, y:e.clientY };
-  const onStart = e => { startRef.current = pos(e); setDrag(d=>({...d, active:true})); };
-  const onMove  = e => { if (!drag.active || !startRef.current) return; const p=pos(e); setDrag(d=>({...d, x:p.x-startRef.current.x, y:p.y-startRef.current.y})); };
+  const onStart = e => {
+    const p = pos(e);
+    startRef.current = p;
+    historyRef.current = [{ x: p.x, t: Date.now() }];
+    setDrag(d=>({...d, active:true}));
+  };
+  const onMove  = e => {
+    if (!startRef.current) return; // use ref to avoid stale-closure issue
+    const p = pos(e);
+    const now = Date.now();
+    // Keep only the last 100 ms of samples for velocity calculation
+    const history = historyRef.current.filter(h => now - h.t < 100);
+    history.push({ x: p.x, t: now });
+    historyRef.current = history;
+    setDrag(d=>({...d, x:p.x-startRef.current.x, y:p.y-startRef.current.y}));
+  };
   const onEnd   = () => {
-    if (!drag.active) return;
-    if (drag.x > SWIPE_THRESHOLD) onRight();
-    else if (drag.x < -SWIPE_THRESHOLD) onLeft();
+    if (!startRef.current) return; // use ref to avoid stale-closure issue
+
+    // Compute release velocity over the last 100 ms window
+    const history = historyRef.current;
+    let vx = 0;
+    if (history.length >= 2) {
+      const dt = history[history.length-1].t - history[0].t;
+      if (dt > 10) vx = (history[history.length-1].x - history[0].x) / dt;
+    }
+
+    // Use ref-based position to avoid stale drag.x from React state
+    const currentX = history.length > 0
+      ? history[history.length-1].x - startRef.current.x
+      : 0;
+
+    // Trigger swipe if displacement exceeds threshold OR flick velocity is sufficient
+    if (currentX > SWIPE_THRESHOLD || vx > VELOCITY_THRESHOLD) onRight();
+    else if (currentX < -SWIPE_THRESHOLD || vx < -VELOCITY_THRESHOLD) onLeft();
+
     setDrag({ x:0, y:0, active:false });
-    startRef.current = null;
+    startRef.current  = null;
+    historyRef.current = [];
   };
 
   const rot   = drag.x * 0.07;
